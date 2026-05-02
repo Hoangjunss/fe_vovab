@@ -1,17 +1,9 @@
 import { MainLayout } from '@/components/layout/main-layout'
-import { TestsBrowser } from '@/components/tests/tests-browser'
-
+import { TestsBrowser } from '@/components/tests/TestsBrowser'
 export default function TestsPage() {
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 md:px-6 md:py-12 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Mock Tests</h1>
-          <p className="text-foreground/60">Practice with full-length and mini tests to prepare for TOEIC</p>
-        </div>
-
-        <TestsBrowser />
-      </div>
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl"><div className="mb-8"><h1 className="text-3xl font-bold">Luyện đề</h1><p className="text-muted-foreground mt-1">Làm quen với cấu trúc đề thi thật</p></div><TestsBrowser /></div>
     </MainLayout>
   )
 }

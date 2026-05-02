@@ -1,17 +1,9 @@
 import { MainLayout } from '@/components/layout/main-layout'
-import { PracticeModules } from '@/components/practice/practice-modules'
-
+import { PracticeModules } from '@/components/practice/PracticeModules'
 export default function PracticePage() {
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 md:px-6 md:py-12 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Practice</h1>
-          <p className="text-foreground/60">Master each skill with targeted practice modules</p>
-        </div>
-
-        <PracticeModules />
-      </div>
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl"><div className="mb-8"><h1 className="text-3xl font-bold">Luyện tập</h1><p className="text-muted-foreground mt-1">Rèn luyện kỹ năng theo từng phần</p></div><PracticeModules /></div>
     </MainLayout>
   )
 }
