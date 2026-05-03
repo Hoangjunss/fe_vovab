@@ -26,8 +26,7 @@ export default function StudyPage() {
       case 'listening':
         return <ListeningStudy setId={setId} />;
       default:
-        // Nếu không có mode, hiển thị màn hình chọn chế độ
-        return <ModeSelectionScreen setId={setId} />;
+       
     }
   };
 
