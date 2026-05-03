@@ -52,12 +52,14 @@
 .animate-clay-float-delayed{animation:clay-float-delayed 10s ease-in-out infinite}
 
 @layer utilities {
-  .clay-card {
-    background: rgba(255,255,255,0.6);
-    backdrop-filter: blur(24px);
-    border-radius: 32px;
-    box-shadow: 16px 16px 32px rgba(0,0,0,0.02), -10px -10px 24px rgba(255,255,255,0.9), inset 6px 6px 12px rgba(107,142,255,0.02), inset -6px -6px 12px rgba(255,255,255,1);
-  }
+.clay-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+  border-radius: 32px;
+  box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.03), -8px -8px 16px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
   .clay-card-hover{transition:all 0.5s}
   .clay-card-hover:hover{transform:translateY(-8px);box-shadow:20px 20px 40px rgba(0,0,0,0.03),-15px -15px 30px rgba(255,255,255,0.95),inset 8px 8px 16px rgba(107,142,255,0.03),inset -8px -8px 16px rgba(255,255,255,1)}
   

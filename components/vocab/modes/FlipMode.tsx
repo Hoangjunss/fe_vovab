@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Volume2, Check, ArrowRight } from 'lucide-react';
 
 interface FlipModeProps {
   word: string;
@@ -8,38 +9,84 @@ interface FlipModeProps {
   exampleSentence?: string;
   isFlipped: boolean;
   onFlip: () => void;
+  onMarkKnown: () => void;
   onNext: () => void;
 }
 
-export function FlipMode({ word, meaning, exampleSentence, isFlipped, onFlip, onNext }: FlipModeProps) {
+export function FlipMode({
+  word,
+  meaning,
+  exampleSentence,
+  isFlipped,
+  onFlip,
+  onMarkKnown,
+  onNext,
+}: FlipModeProps) {
+  const speak = () => {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="h-64 w-full [perspective:1000px] cursor-pointer" onClick={onFlip}>
+    <div className="space-y-8">
+      {/* Thẻ lật */}
+      <div
+        className="relative h-96 w-full cursor-pointer [perspective:1000px] group"
+        onClick={onFlip}
+      >
         <div
           className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] ${
             isFlipped ? '[transform:rotateY(180deg)]' : ''
           }`}
         >
-          {/* Mặt trước */}
-          <div className="absolute inset-0 [backface-visibility:hidden] bg-gradient-to-br from-primary/10 to-transparent rounded-xl flex items-center justify-center shadow-md">
-            <div className="text-center">
-              <div className="text-sm text-foreground/60 mb-4">Từ</div>
-              <div className="text-4xl font-bold">{word}</div>
+          {/* Mặt trước (từ) */}
+          <div className="absolute inset-0 [backface-visibility:hidden] clay-card flex flex-col items-center justify-center text-center p-8 border border-white/30 shadow-xl">
+            <div className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
+              <span>🔊 Click to flip & hear</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  speak();
+                }}
+                className="p-2 rounded-full hover:bg-white/20 transition"
+                aria-label="Phát âm"
+              >
+                <Volume2 className="h-5 w-5" />
+              </button>
             </div>
+            <div className="text-5xl font-black text-foreground">{word}</div>
           </div>
-          {/* Mặt sau */}
-          <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-secondary/20 to-background rounded-xl flex items-center justify-center shadow-md">
-            <div className="text-center">
-              <div className="text-sm text-foreground/60 mb-4">Nghĩa</div>
-              <div className="text-4xl font-bold">{meaning}</div>
-              {exampleSentence && <p className="text-sm text-muted-foreground mt-4 italic">{exampleSentence}</p>}
-            </div>
+
+          {/* Mặt sau (nghĩa) */}
+          <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] clay-card flex flex-col items-center justify-center text-center p-8 border border-white/30 shadow-xl">
+            <div className="text-sm text-muted-foreground mb-4">Nghĩa & ví dụ</div>
+            <div className="text-3xl font-bold text-foreground mb-4">{meaning}</div>
+            {exampleSentence && (
+              <p className="text-muted-foreground italic max-w-md">{exampleSentence}</p>
+            )}
           </div>
         </div>
       </div>
-      <Button className="w-full active:scale-95 transition-transform" onClick={onNext}>
-        Tiếp theo
-      </Button>
+
+      {/* Hai nút bấm */}
+      <div className="flex gap-4 justify-center">
+        <Button
+          onClick={onMarkKnown}
+          className="flex-1 clay-button-outline bg-white/80 hover:bg-white gap-2"
+        >
+          <Check className="h-4 w-4" />
+          😊 Đã thuộc
+        </Button>
+        <Button
+          onClick={onNext}
+          className="flex-1 clay-button gap-2"
+        >
+          <ArrowRight className="h-4 w-4" />
+          Chưa nhớ / Bỏ qua
+        </Button>
+      </div>
     </div>
   );
 }
