@@ -63,7 +63,10 @@ export function FlashcardStudy({ setId }: { setId?: string }) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {(['flip', 'mcq', 'typing', 'listening'] as StudyMode[]).map((mode) => (
-          <Card key={mode} className="border-border cursor-pointer hover:border-primary transition-colors" onClick={() => { setStudyMode(mode); setSessionStarted(true) }}>
+        <Card
+  className="border-0 cursor-pointer h-64 flex items-center justify-center bg-gradient-to-br from-primary/10 via-accent/5 to-background hover:shadow-xl transition-all"
+  onClick={() => setIsFlipped(!isFlipped)}
+>
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl mb-2">

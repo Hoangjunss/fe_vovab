@@ -165,17 +165,17 @@ export function WordBlastGame() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {words.map((item, idx) => (
           <button
-            key={idx}
-            onClick={() => handleWordClick(idx)}
-            disabled={matched.has(idx)}
-            className={`p-4 rounded-lg font-medium text-sm transition-all ${
-              matched.has(idx)
-                ? 'opacity-30 cursor-default'
-                : selected === idx
-                ? 'bg-primary text-primary-foreground scale-105'
-                : 'bg-secondary text-foreground hover:bg-primary/10'
-            }`}
-          >
+  key={idx}
+  onClick={() => handleWordClick(idx)}
+  disabled={matched.has(idx)}
+  className={`p-4 rounded-xl font-medium text-sm transition-all ${
+    matched.has(idx)
+      ? 'opacity-30 cursor-default'
+      : selected === idx
+      ? 'bg-gradient-to-r from-primary to-accent text-white scale-105 shadow-lg'
+      : 'bg-gradient-to-br from-card to-muted text-foreground hover:shadow-md'
+  }`}
+>
             <div className="text-xs text-foreground/60 mb-1">
               {item.type === 'english' ? 'English' : 'Vietnamese'}
             </div>
