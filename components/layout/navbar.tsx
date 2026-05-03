@@ -50,9 +50,28 @@ export function Navbar() {
     </>
   )
 }
+// Trong component NavLink (khoảng dòng 50-55)
 function NavLink({ href, children, icon }: { href: string; children: React.ReactNode; icon: React.ReactNode }) {
-  return <Link href={href} className="group flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-all rounded-lg hover:bg-secondary">{icon}{children}</Link>
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-all duration-200 rounded-full hover:bg-primary/10"
+    >
+      {icon}
+      {children}
+    </Link>
+  );
 }
+
+// DrawerLink (mobile) cũng tương tự
 function DrawerLink({ href, onClick, children }: { href: string; onClick: () => void; children: React.ReactNode }) {
-  return <Link href={href} onClick={onClick} className="block px-4 py-3 rounded-lg text-base font-medium text-foreground hover:bg-secondary transition-all">{children}</Link>
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="block px-4 py-3 rounded-xl text-base font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-200"
+    >
+      {children}
+    </Link>
+  );
 }
