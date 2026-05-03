@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { VocabularyTabs } from './VocabularyTabs';
 import { VocabularyFilter } from './VocabularyFilter';
@@ -6,6 +7,10 @@ import { VocabularySetCard } from './VocabularySetCard';
 import { EmptyState } from '@/components/common/EmptyState';
 import { BookOpen, Target, Zap } from 'lucide-react';
 import { vocabApi } from '@/lib/api';
+import { StaggeredSkeleton } from '@/components/ui/staggered-skeleton';
+import { VocabularySetSkeleton } from '@/components/skeletons';
+import { GlassSkeleton } from '@/components/ui/glass-skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 export function VocabularyBrowser() {
   const [activeTab, setActiveTab] = useState('suggested');
@@ -14,21 +19,16 @@ export function VocabularyBrowser() {
   const [sets, setSets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const showSkeleton = useMinimumLoading(loading, 500);
+
   useEffect(() => {
     const fetchSets = async () => {
       setLoading(true);
       try {
-        let response;
-        if (activeTab === 'suggested') {
-          response = await vocabApi.getPublicSets(searchQuery || undefined);
-        } else {
-          // For my-sets, still use public if no auth; or you can keep mock
-          response = await vocabApi.getPublicSets(searchQuery || undefined);
-        }
-        // API trả về Page object { content, ... }
+        const response = await vocabApi.getPublicSets(searchQuery || undefined);
         setSets(response.data?.content || []);
       } catch (error) {
-        console.error('Failed to fetch sets:', error);
+        console.error(error);
         setSets([]);
       } finally {
         setLoading(false);
@@ -37,19 +37,41 @@ export function VocabularyBrowser() {
     fetchSets();
   }, [activeTab, searchQuery]);
 
-  // Filter by difficulty (if difficulty_level exists)
   const filteredSets = sets.filter(set => {
     if (selectedDifficulty === 'all') return true;
     const level = set.difficultyLevel?.toString();
     return level === selectedDifficulty;
   });
 
-  // Helper to map difficulty string to numeric for filter
-  const difficultyMap: Record<string, string> = { 'all': 'all', 'Beginner': '1', 'Intermediate': '3', 'Advanced': '5' };
+  const handleDifficultyChange = (diff: string) => setSelectedDifficulty(diff);
 
-  const handleDifficultyChange = (diff: string) => {
-    setSelectedDifficulty(diff);
-  };
+  if (showSkeleton) {
+    return (
+      <div className="space-y-6">
+        {/* Skeleton cho filter */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <GlassSkeleton variant="card" className="h-10 w-full md:max-w-md rounded-md" shimmer />
+          <div className="flex gap-2 flex-wrap">
+            {[1, 2, 3, 4].map(i => (
+              <GlassSkeleton key={i} variant="card" className="h-9 w-16 rounded-md" shimmer />
+            ))}
+          </div>
+        </div>
+        {/* Skeleton cho tabs */}
+        <div className="flex gap-2 border-b border-border">
+          {[1, 2, 3, 4].map(i => (
+            <GlassSkeleton key={i} variant="text" className="h-10 w-20" shimmer />
+          ))}
+        </div>
+        {/* Skeleton cho card grid */}
+        <StaggeredSkeleton direction="horizontal" staggerDelay={0.05}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <VocabularySetSkeleton key={i} />
+          ))}
+        </StaggeredSkeleton>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -60,15 +82,14 @@ export function VocabularyBrowser() {
         setSelectedDifficulty={handleDifficultyChange}
       />
       <VocabularyTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      {loading && <div className="text-center py-12">Đang tải...</div>}
-      {!loading && (activeTab === 'suggested' || activeTab === 'my-sets') && (
+      {(activeTab === 'suggested' || activeTab === 'my-sets') && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredSets.map(set => (
             <VocabularySetCard key={set.id} set={set} />
           ))}
         </div>
       )}
-      {!loading && activeTab === 'my-sets' && filteredSets.length === 0 && (
+      {activeTab === 'my-sets' && filteredSets.length === 0 && !loading && (
         <EmptyState icon={BookOpen} message="Bạn chưa có bộ từ nào. Hãy tạo bộ đầu tiên!" buttonText="Tạo bộ mới" />
       )}
       {activeTab === 'challenges' && <EmptyState icon={Target} message="Chưa có thử thách nào. Hãy quay lại sau!" />}

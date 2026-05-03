@@ -11,6 +11,8 @@ import { McqCard } from './McqCard';
 import { TypingCard } from './TypingCard';
 import { ListeningCard } from './ListeningCard';
 import { FlashcardModeSelector } from './FlashcardModeSelector';
+import { FlashcardSkeleton } from '@/components/skeletons';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 type StudyMode = 'flip' | 'mcq' | 'typing' | 'listening';
 
@@ -38,15 +40,12 @@ export function FlashcardStudy({ setId }: { setId: string }) {
   const [learnedSet, setLearnedSet] = useState<Set<string>>(new Set());
   const [isGuestReady, setIsGuestReady] = useState(!!user);
 
-  // Guest: load learned từ localStorage
+  const showSkeleton = useMinimumLoading(loading && cards.length === 0, 500);
+
   useEffect(() => {
     if (!user && typeof window !== 'undefined') {
       const stored = localStorage.getItem(`learned_${setId}`);
-      if (stored) {
-        setLearnedSet(new Set(JSON.parse(stored)));
-      } else {
-        setLearnedSet(new Set());
-      }
+      if (stored) setLearnedSet(new Set(JSON.parse(stored)));
       setIsGuestReady(true);
     }
   }, [setId, user]);
@@ -70,9 +69,7 @@ export function FlashcardStudy({ setId }: { setId: string }) {
           break;
         }
         let filtered = newCards;
-        if (!user) {
-          filtered = newCards.filter(c => !learnedSet.has(c.id));
-        }
+        if (!user) filtered = newCards.filter(c => !learnedSet.has(c.id));
         if (filtered.length > 0 || currentPage + 1 >= res.data.totalPages) {
           setCards(prev => reset ? filtered : [...prev, ...filtered]);
           setPage(prev => reset ? 1 : prev + 1);
@@ -83,9 +80,7 @@ export function FlashcardStudy({ setId }: { setId: string }) {
           attempts++;
         }
       }
-      if (!fetched) {
-        setHasMore(false);
-      }
+      if (!fetched) setHasMore(false);
     } catch (err) {
       console.error(err);
     } finally {
@@ -93,14 +88,10 @@ export function FlashcardStudy({ setId }: { setId: string }) {
     }
   }, [setId, page, hasMore, user, learnedSet]);
 
-  // Load lần đầu
   useEffect(() => {
-    if (user || isGuestReady) {
-      fetchCards(true);
-    }
+    if (user || isGuestReady) fetchCards(true);
   }, [setId, user, isGuestReady]);
 
-  // Tạo options cho MCQ
   useEffect(() => {
     if (mode === 'mcq' && cards[currentIndex]) {
       const otherMeanings = cards
@@ -119,11 +110,7 @@ export function FlashcardStudy({ setId }: { setId: string }) {
   const handleAnswer = async (isCorrect: boolean, quality: number) => {
     if (!currentCard) return;
     if (user) {
-      try {
-        await vocabApi.submitAnswer(currentCard.id, quality);
-      } catch (err) {
-        console.error('Submit failed', err);
-      }
+      try { await vocabApi.submitAnswer(currentCard.id, quality); } catch (err) { console.error(err); }
     } else {
       const newSet = new Set(learnedSet);
       newSet.add(currentCard.id);
@@ -131,33 +118,26 @@ export function FlashcardStudy({ setId }: { setId: string }) {
       localStorage.setItem(`learned_${setId}`, JSON.stringify(Array.from(newSet)));
     }
     if (isCorrect) setCorrectCount(prev => prev + 1);
-    // Xóa thẻ hiện tại
     const newCards = cards.filter((_, idx) => idx !== currentIndex);
     setCards(newCards);
-    if (newCards.length <= 5 && hasMore && !loading) {
-      fetchCards();
-    }
+    if (newCards.length <= 5 && hasMore && !loading) fetchCards();
     setIsFlipped(false);
     setTypingAnswer('');
     setSelectedAns(null);
   };
 
-  // Hiển thị loading
-  if (loading && cards.length === 0) {
-    return <div className="text-center py-12">Đang tải thẻ...</div>;
+  if (showSkeleton) {
+    return <FlashcardSkeleton />;
   }
 
-  // Hoàn thành
   if (!currentCard && cards.length === 0) {
     return <FlashcardComplete totalElements={totalElements} />;
   }
 
-  // Chưa chọn chế độ
   if (!mode) {
     return <FlashcardModeSelector onSelectMode={setMode} />;
   }
 
-  // Đang học
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -171,16 +151,16 @@ export function FlashcardStudy({ setId }: { setId: string }) {
       </div>
 
       {mode === 'flip' && (
-  <FlipCard
-    key={currentCard.id}          // ← thêm dòng này
-    word={currentCard.word}
-    meaning={currentCard.meaning}
-    exampleSentence={currentCard.exampleSentence}
-    isFlipped={isFlipped}
-    onFlip={() => setIsFlipped(!isFlipped)}
-    onNext={() => handleAnswer(true, 3)}
-  />
-)}
+        <FlipCard
+          key={currentCard.id}
+          word={currentCard.word}
+          meaning={currentCard.meaning}
+          exampleSentence={currentCard.exampleSentence}
+          isFlipped={isFlipped}
+          onFlip={() => setIsFlipped(!isFlipped)}
+          onNext={() => handleAnswer(true, 3)}
+        />
+      )}
       {mode === 'mcq' && (
         <McqCard
           word={currentCard.word}
