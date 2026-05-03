@@ -33,6 +33,34 @@ interface FlashcardSession {
   cardsDueToday: number;
 }
 
+// Thêm interface cho phân trang (dùng trong getCardsBySet)
+interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+// Interface cho thẻ từ (vocab card)
+interface VocabCard {
+  id: string;
+  word: string;
+  meaning: string;
+  exampleSentence?: string;
+  phonetic?: string;
+  audioUrl?: string;
+  imageUrl?: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  avatarUrl?: string;
+  role: string;
+}
+
 // ========== HÀM FETCH CHUNG ==========
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -46,16 +74,7 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
   return response.json();
 }
 
-// ... các interface khác giữ nguyên
-
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  avatarUrl?: string;
-  role: string;
-}
-
+// ========== AUTH API ==========
 export const authApi = {
   register: (email: string, password: string, fullName: string) =>
     apiFetch<{ accessToken: string; refreshToken: string }>('/auth/register', {
@@ -67,8 +86,9 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  getMe: () => apiFetch<User>('/auth/me'),   // ← thêm generic User
+  getMe: () => apiFetch<User>('/auth/me'),
 };
+
 // ========== VOCABULARY API ==========
 export const vocabApi = {
   getPublicSets: (topic?: string, page = 0, size = 12) =>
@@ -82,4 +102,7 @@ export const vocabApi = {
       method: 'POST',
       body: JSON.stringify({ cardId, quality }),
     }),
+  // Thêm method mới: lấy danh sách thẻ của một bộ (phân trang)
+  getCardsBySet: (setId: string, page = 0, size = 20) =>
+    apiFetch<PageResponse<VocabCard>>(`/vocab/sets/${setId}/cards?page=${page}&size=${size}`),
 };
