@@ -1,7 +1,6 @@
 'use client';
+
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
 import { useVocabularyStudy } from '@/hooks/use-vocabulary-study';
 import { McqMode } from '../modes/McqMode';
 import { FlashcardSkeleton } from '@/components/skeletons';
@@ -29,7 +28,7 @@ export function McqStudy({ setId }: { setId: string }) {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-green-600">🎉 Hoàn thành!</h2>
         <p className="mt-2">Bạn đã học hết {totalElements} từ.</p>
-        <Button className="mt-6" onClick={() => window.location.reload()}>Học lại</Button>
+        <button className="mt-6 clay-button px-6 py-2 rounded-full" onClick={() => window.location.reload()}>Học lại</button>
       </div>
     );
   }
@@ -40,9 +39,6 @@ export function McqStudy({ setId }: { setId: string }) {
     const isCorrect = ans === currentCard.meaning;
     const quality = isCorrect ? 3 : 1;
     markAsLearned(currentCard.id, quality);
-    if (isCorrect) {
-      // correctCount sẽ tăng ở nextCard
-    }
     setTimeout(() => {
       nextCard();
       setSelected(null);
@@ -50,17 +46,11 @@ export function McqStudy({ setId }: { setId: string }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Trắc nghiệm</h2>
-          <p className="text-sm text-muted-foreground">Đã đúng {correctCount} từ</p>
-        </div>
-        <Button variant="outline" onClick={() => window.location.href = '/vocab'} className="active:scale-95">
-          <RotateCcw className="mr-2 h-4 w-4" /> Quay lại
-        </Button>
-      </div>
-      <McqMode word={currentCard.word} options={options} selected={selected} onSelect={handleSelect} />
-    </div>
+    <McqMode
+      word={currentCard.word}
+      options={options}
+      selected={selected}
+      onSelect={handleSelect}
+    />
   );
 }

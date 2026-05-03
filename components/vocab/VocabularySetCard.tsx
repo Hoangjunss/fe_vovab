@@ -19,17 +19,17 @@ export function VocabularySetCard({ set }: { set: any }) {
 
   return (
     <>
-      <Card className="border-border/50 bg-white shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer overflow-hidden group relative">
+      <Card className="h-full flex flex-col border-border/50 bg-white shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer overflow-hidden group relative">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <CardHeader className="pb-3 relative z-10">
+        <CardHeader className="pb-3 relative z-10 flex-shrink-0">
           <CardTitle className="text-lg line-clamp-1 group-hover:text-primary transition-colors">
             {set.title}
           </CardTitle>
-          <CardDescription className="mt-1 line-clamp-2">
+          <CardDescription className="mt-1 line-clamp-2 flex-grow">
             {set.description || 'Không có mô tả'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
+        <CardContent className="space-y-4 relative z-10 flex flex-col mt-auto">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Số từ</p>
@@ -51,12 +51,7 @@ export function VocabularySetCard({ set }: { set: any }) {
           </Button>
         </CardContent>
       </Card>
-
-      <ModeSelectionModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        setId={set.id}
-      />
+      <ModeSelectionModal open={modalOpen} onOpenChange={setModalOpen} setId={set.id} />
     </>
   );
 }
