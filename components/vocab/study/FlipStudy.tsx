@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useVocabularyStudy } from '@/hooks/use-vocabulary-study';
 import { FlipMode } from '../modes/FlipMode';
-import { FlashcardSkeleton } from '@/components/skeletons';
+import { FlashcardSkeleton, FlipSkeleton } from '@/components/skeletons';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { PartyPopper } from 'lucide-react';
 
@@ -12,7 +12,7 @@ export function FlipStudy({ setId }: { setId: string }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const showSkeleton = useMinimumLoading(loading && !currentCard, 500);
 
-  if (showSkeleton) return <FlashcardSkeleton />;
+  if (showSkeleton) return <FlipSkeleton  />;
   if (!currentCard && !loading) {
     return (
       <div className="text-center py-12">

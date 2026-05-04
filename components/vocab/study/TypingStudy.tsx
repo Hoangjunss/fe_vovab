@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useVocabularyStudy } from '@/hooks/use-vocabulary-study';
 import { TypingMode } from '../modes/TypingMode';
-import { FlashcardSkeleton } from '@/components/skeletons';
+import { FlashcardSkeleton, TypingSkeleton } from '@/components/skeletons';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { PartyPopper } from 'lucide-react';
 
@@ -29,7 +29,7 @@ export function TypingStudy({ setId }: { setId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, cards.length]);
 
-  if (showSkeleton) return <FlashcardSkeleton />;
+  if (showSkeleton) return <TypingSkeleton  />;
 
   if (!currentCard && !loading) {
     return (
