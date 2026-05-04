@@ -78,9 +78,9 @@ export function useVocabularyStudy(setId: string, mode: 'flip' | 'mcq' | 'typing
     }
   }, [setId, page, hasMore, learnedSet]);
 
-  // Tự động fetch thêm khi số từ còn lại ít hơn 8
+  // Tự động fetch thêm khi số từ còn lại ít hơn 5 (thay vì 8 để nhạy hơn)
   useEffect(() => {
-    if (!loading && cards.length < 8 && hasMore && initialized) {
+    if (!loading && cards.length < 5 && hasMore && initialized) {
       fetchCards();
     }
   }, [cards.length, loading, hasMore, fetchCards, initialized]);
@@ -93,7 +93,6 @@ export function useVocabularyStudy(setId: string, mode: 'flip' | 'mcq' | 'typing
   }, [setId, initialized]);
 
   const markAsLearned = async (cardId: string, quality: number = 3) => {
-    // Chỉ đánh dấu đã học nếu trả lời đúng (quality >= 3)
     if (quality >= 3) {
       setLearnedSet(prev => new Set(prev).add(cardId));
     }
@@ -112,6 +111,34 @@ export function useVocabularyStudy(setId: string, mode: 'flip' | 'mcq' | 'typing
     setCorrectCount(prev => prev + 1);
   };
 
+  const jumpToRandomCard = useCallback(() => {
+    if (cards.length <= 1) return;
+    let newIndex = Math.floor(Math.random() * cards.length);
+    while (newIndex === currentIndex && cards.length > 1) {
+      newIndex = Math.floor(Math.random() * cards.length);
+    }
+    setCurrentIndex(newIndex);
+  }, [cards.length, currentIndex]);
+
+  // Reset tiến trình: xóa learnedSet, xóa localStorage, tải lại toàn bộ từ
+  const resetProgress = useCallback(async () => {
+    // Xóa learnedSet
+    setLearnedSet(new Set());
+    // Xóa localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(storageKey);
+    }
+    // Reset các state liên quan
+    setCards([]);
+    setCurrentIndex(0);
+    setPage(0);
+    setHasMore(true);
+    setCorrectCount(0);
+    setLoading(true);
+    // Fetch lại từ đầu
+    await fetchCards(true);
+  }, [storageKey, fetchCards]);
+
   const currentCard = cards[currentIndex];
 
   return {
@@ -122,5 +149,7 @@ export function useVocabularyStudy(setId: string, mode: 'flip' | 'mcq' | 'typing
     correctCount,
     markAsLearned,
     nextCard,
+    jumpToRandomCard,
+    resetProgress,   // expose function
   };
 }
