@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useVocabularyStudy } from '@/hooks/use-vocabulary-study';
 import { McqMode, McqDirection, McqOption } from '../modes/McqMode';
-import { FlashcardSkeleton } from '@/components/skeletons';
+import { FlashcardSkeleton, McqSkeleton } from '@/components/skeletons';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { PartyPopper } from 'lucide-react';
 
@@ -85,7 +85,7 @@ export function McqStudy({ setId }: { setId: string }) {
     }
   }, [currentCard, cards]);
 
-  if (showSkeleton) return <FlashcardSkeleton />;
+  if (showSkeleton) return <McqSkeleton  />;
   
   if (!currentCard && !loading) {
     return (

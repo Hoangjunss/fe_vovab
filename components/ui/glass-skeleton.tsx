@@ -2,7 +2,7 @@
 import { cn } from '@/lib/utils';
 
 interface GlassSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'text' | 'title' | 'button' | 'image' | 'card' | 'circle';
+  variant?: 'text' | 'title' | 'button' | 'image' | 'card' | 'circle' | 'progress';
   shimmer?: boolean;
 }
 
@@ -21,6 +21,7 @@ export function GlassSkeleton({
       'h-32 w-full': variant === 'image',
       'h-64 w-full rounded-2xl': variant === 'card',
       'h-12 w-12 rounded-full': variant === 'circle',
+       'h-2 w-full rounded-full': variant === 'progress', 
     },
     className
   );

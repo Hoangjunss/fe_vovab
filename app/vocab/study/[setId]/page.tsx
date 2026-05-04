@@ -33,11 +33,11 @@ export default function StudyPage() {
   if (!mode) {
     return (
       <MainLayout>
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Chọn chế độ học</h1>
-            <Button variant="outline" onClick={() => router.push('/vocab')} className="clay-button-outline">
-              <RotateCcw className="mr-2 h-4 w-4" /> Quay lại
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-xl font-bold">Chọn chế độ học</h1>
+            <Button variant="outline" onClick={() => router.push('/vocab')} className="clay-button-outline h-8 px-3">
+              <RotateCcw className="mr-1 h-3 w-3" /> Quay lại
             </Button>
           </div>
           <ModeSwitcher setId={setId} currentMode={null} />
@@ -48,18 +48,15 @@ export default function StudyPage() {
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header với nút quay lại và mode switcher */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold capitalize">{mode}</h1>
-          <Button variant="outline" onClick={() => router.push('/vocab')} className="clay-button-outline">
-            <RotateCcw className="mr-2 h-4 w-4" /> Quay lại
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold capitalize">{mode}</h1>
+          <Button variant="outline" onClick={() => router.push('/vocab')} className="clay-button-outline h-8 px-3">
+            <RotateCcw className="mr-1 h-3 w-3" /> Quay lại
           </Button>
         </div>
         <ModeSwitcher setId={setId} currentMode={mode} />
-        <div className="mt-8">
-          {renderStudy()}
-        </div>
+        <div className="mt-6">{renderStudy()}</div>
       </div>
     </MainLayout>
   );
