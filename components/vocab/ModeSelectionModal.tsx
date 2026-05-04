@@ -2,6 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { RefreshCw, BookOpen, Keyboard, Volume2 } from 'lucide-react';
 
 interface ModeSelectionModalProps {
   open: boolean;
@@ -13,10 +14,10 @@ export function ModeSelectionModal({ open, onOpenChange, setId }: ModeSelectionM
   const router = useRouter();
 
   const modes = [
-    { name: 'flip', label: 'Lật thẻ', icon: '🔄' },
-    { name: 'mcq', label: 'Trắc nghiệm', icon: '📖' },
-    { name: 'typing', label: 'Gõ chính tả', icon: '⌨️' },
-    { name: 'listening', label: 'Nghe - chọn', icon: '🔊' },
+    { name: 'flip', label: 'Lật thẻ', icon: RefreshCw },
+    { name: 'mcq', label: 'Trắc nghiệm', icon: BookOpen },
+    { name: 'typing', label: 'Gõ chính tả', icon: Keyboard },
+    { name: 'listening', label: 'Nghe - chọn', icon: Volume2 },
   ];
 
   const handleSelect = (mode: string) => {
@@ -35,19 +36,22 @@ export function ModeSelectionModal({ open, onOpenChange, setId }: ModeSelectionM
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-5">
-            {modes.map((mode) => (
-              <Button
-                key={mode.name}
-                variant="ghost"
-                className="flex flex-col gap-1.5 h-auto py-4 rounded-xl bg-white/40 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/30 shadow-sm hover:bg-white/70 hover:shadow-md hover:border-primary/30 hover:scale-[1.02]"
-                onClick={() => handleSelect(mode.name)}
-              >
-                <span className="text-3xl transition-transform duration-200 group-hover:scale-110">{mode.icon}</span>
-                <span className="text-xs font-medium text-foreground/80 group-hover:text-primary transition-colors">
-                  {mode.label}
-                </span>
-              </Button>
-            ))}
+            {modes.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <Button
+                  key={mode.name}
+                  variant="ghost"
+                  className="flex flex-col gap-1.5 h-auto py-4 rounded-xl bg-white/40 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/30 shadow-sm hover:bg-white/70 hover:shadow-md hover:border-primary/30 hover:scale-[1.02]"
+                  onClick={() => handleSelect(mode.name)}
+                >
+                  <Icon className="h-8 w-8 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="text-xs font-medium text-foreground/80 group-hover:text-primary transition-colors">
+                    {mode.label}
+                  </span>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </DialogContent>

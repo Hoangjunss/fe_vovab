@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/context/AuthContext'
+import { Mascot } from '@/components/common/Mascot'
 import './globals.css'
 
 const geist = Geist({ subsets: ["latin"] });
@@ -42,6 +43,7 @@ export default function RootLayout({
           {children}
         </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        <Mascot />
       </body>
     </html>
   )

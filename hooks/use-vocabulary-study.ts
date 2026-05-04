@@ -6,10 +6,11 @@ export interface CardData {
   id: string;
   word: string;
   meaning: string;
+  phonetic?: string;
   exampleSentence?: string;
 }
 
-export function useVocabularyStudy(setId: string) {
+export function useVocabularyStudy(setId: string, mode: 'flip' | 'mcq' | 'typing' | 'listening') {
   const { user } = useAuth();
   const [cards, setCards] = useState<CardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -19,15 +20,27 @@ export function useVocabularyStudy(setId: string) {
   const [totalElements, setTotalElements] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [learnedSet, setLearnedSet] = useState<Set<string>>(new Set());
-  const [isGuestReady, setIsGuestReady] = useState(!!user);
+  const [initialized, setInitialized] = useState(false);
 
+  const storageKey = `learned_${setId}_${mode}`;
+
+  // Load learnedSet từ localStorage theo mode
   useEffect(() => {
-    if (!user && typeof window !== 'undefined') {
-      const stored = localStorage.getItem(`learned_${setId}`);
-      if (stored) setLearnedSet(new Set(JSON.parse(stored)));
-      setIsGuestReady(true);
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        setLearnedSet(new Set(JSON.parse(stored)));
+      }
+      setInitialized(true);
     }
-  }, [setId, user]);
+  }, [storageKey]);
+
+  // Lưu learnedSet khi thay đổi
+  useEffect(() => {
+    if (initialized && typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(learnedSet)));
+    }
+  }, [learnedSet, initialized, storageKey]);
 
   const fetchCards = useCallback(async (reset = false) => {
     if (!hasMore && !reset) return;
@@ -45,8 +58,8 @@ export function useVocabularyStudy(setId: string) {
           setHasMore(false);
           break;
         }
-        let filtered = newCards;
-        if (!user) filtered = newCards.filter(c => !learnedSet.has(c.id));
+        // Lọc bỏ những từ đã học trong mode này
+        let filtered = newCards.filter(c => !learnedSet.has(c.id));
         if (filtered.length > 0 || currentPage + 1 >= res.data.totalPages) {
           setCards(prev => reset ? filtered : [...prev, ...filtered]);
           setPage(prev => reset ? 1 : prev + 1);
@@ -63,34 +76,39 @@ export function useVocabularyStudy(setId: string) {
     } finally {
       setLoading(false);
     }
-  }, [setId, page, hasMore, user, learnedSet]);
+  }, [setId, page, hasMore, learnedSet]);
 
+  // Tự động fetch thêm khi số từ còn lại ít hơn 8
   useEffect(() => {
-    if (user || isGuestReady) fetchCards(true);
-  }, [setId, user, isGuestReady]);
+    if (!loading && cards.length < 8 && hasMore && initialized) {
+      fetchCards();
+    }
+  }, [cards.length, loading, hasMore, fetchCards, initialized]);
+
+  // Khởi tạo lần đầu
+  useEffect(() => {
+    if (initialized) {
+      fetchCards(true);
+    }
+  }, [setId, initialized]);
 
   const markAsLearned = async (cardId: string, quality: number = 3) => {
+    // Chỉ đánh dấu đã học nếu trả lời đúng (quality >= 3)
+    if (quality >= 3) {
+      setLearnedSet(prev => new Set(prev).add(cardId));
+    }
     if (user) {
       try {
         await vocabApi.submitAnswer(cardId, quality);
       } catch (err) {
         console.error(err);
       }
-    } else {
-      const newSet = new Set(learnedSet);
-      newSet.add(cardId);
-      setLearnedSet(newSet);
-      localStorage.setItem(`learned_${setId}`, JSON.stringify(Array.from(newSet)));
     }
   };
 
   const nextCard = () => {
     if (cards.length === 0) return;
-    const newCards = cards.filter((_, idx) => idx !== currentIndex);
-    setCards(newCards);
-    if (newCards.length <= 5 && hasMore && !loading) {
-      fetchCards();
-    }
+    setCards(prev => prev.filter((_, idx) => idx !== currentIndex));
     setCorrectCount(prev => prev + 1);
   };
 

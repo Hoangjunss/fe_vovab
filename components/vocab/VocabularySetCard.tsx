@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ModeSelectionModal } from './ModeSelectionModal';
+import { Rocket } from 'lucide-react';
 
 export function VocabularySetCard({ set }: { set: any }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -47,7 +48,7 @@ export function VocabularySetCard({ set }: { set: any }) {
               setModalOpen(true);
             }}
           >
-            Học ngay 🚀
+            Học ngay <Rocket className="ml-1 h-4 w-4" />
           </Button>
         </CardContent>
       </Card>
