@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Volume2, Check, ArrowRight } from 'lucide-react';
+import { Volume2, Check, ArrowRight ,ArrowLeft} from 'lucide-react';
 
 interface FlipModeProps {
   word: string;
@@ -9,8 +9,10 @@ interface FlipModeProps {
   exampleSentence?: string;
   isFlipped: boolean;
   onFlip: () => void;
-  onMarkKnown: () => void;
+  onPrev: () => void;
   onNext: () => void;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
 export function FlipMode({
@@ -19,8 +21,10 @@ export function FlipMode({
   exampleSentence,
   isFlipped,
   onFlip,
-  onMarkKnown,
+  onPrev,
   onNext,
+  isFirst,
+  isLast,
 }: FlipModeProps) {
   const speak = () => {
     const utterance = new SpeechSynthesisUtterance(word);
@@ -73,18 +77,20 @@ export function FlipMode({
       {/* Hai nút bấm */}
       <div className="flex gap-4 justify-center">
         <Button
-          onClick={onMarkKnown}
-          className="flex-1 clay-button-outline bg-white/80 hover:bg-white gap-2"
+          onClick={onPrev}
+          disabled={isFirst}
+          className="flex-1 clay-button-outline bg-white/80 hover:bg-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Check className="h-4 w-4" />
-          😊 Đã thuộc
+          <ArrowLeft className="h-4 w-4" />
+          Câu trước
         </Button>
         <Button
           onClick={onNext}
-          className="flex-1 clay-button gap-2"
+          disabled={isLast}
+          className="flex-1 clay-button gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
+          Câu tiếp
           <ArrowRight className="h-4 w-4" />
-          Chưa nhớ / Bỏ qua
         </Button>
       </div>
     </div>
