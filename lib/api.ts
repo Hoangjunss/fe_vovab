@@ -63,10 +63,20 @@ interface User {
 
 // ========== HÀM FETCH CHUNG ==========
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  // Lấy token từ localStorage (chỉ chạy trên client)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers,
   });
+  
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Lỗi kết nối' }));
     throw new Error(error.message || `HTTP ${response.status}`);
@@ -87,6 +97,11 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
   getMe: () => apiFetch<User>('/auth/me'),
+  googleLogin: (idToken: string) =>
+  apiFetch<{ accessToken: string; refreshToken: string }>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  }),
 };
 
 // ========== VOCABULARY API ==========
