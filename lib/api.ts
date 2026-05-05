@@ -1,5 +1,8 @@
 // lib/api.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!API_BASE_URL) {
+  throw new Error('NEXT_PUBLIC_API_URL is not defined');
+}
 
 // ========== KIỂU DỮ LIỆU ==========
 interface ApiResponse<T> {
