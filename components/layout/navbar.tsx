@@ -10,12 +10,12 @@ export function Navbar() {
     <>
       <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-border/50 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-sm">L24</span>
-            </div>
-            <span className="font-extrabold text-lg hidden sm:inline-block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">LEARN24H VOCAB</span>
-          </Link>
+         <Link href="/" className="flex items-center gap-2">
+  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+    <span className="text-white font-bold text-sm">V</span>
+  </div>
+  <span className="font-extrabold text-lg hidden sm:inline-block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Vocab</span>
+</Link>
           <div className="hidden md:flex items-center gap-1">
             <NavLink href="/" icon={<LayoutDashboard className="h-4 w-4" />}>Dashboard</NavLink>
             <NavLink href="/vocab" icon={<BookOpen className="h-4 w-4" />}>Từ vựng</NavLink>

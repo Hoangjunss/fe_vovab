@@ -7,10 +7,9 @@ import './globals.css'
 
 const geist = Geist({ subsets: ["latin"] });
 const geistMono = Geist_Mono({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: 'TOEIC Learning',
-  description: 'Learn TOEIC with Đậu Bé',
+  title: 'Vocab',
+  description: 'Học từ vựng TOEIC hiệu quả với Vocab',
   generator: 'v0.app',
   icons: {
     icon: [
