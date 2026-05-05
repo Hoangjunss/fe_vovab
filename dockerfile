@@ -4,9 +4,11 @@ WORKDIR /app
 
 # 1. Khai báo "biến tạm" (Build Argument)
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 # 2. Gán biến tạm cho biến môi trường thực tế
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 # Copy package files và cài dependencies
 COPY package*.json ./
