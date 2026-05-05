@@ -26,3 +26,4 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/fe_vocab:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://vocabwar.online/api
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
