@@ -26,19 +26,25 @@ export function ListeningMode({ word, meaning, onSubmit }: ListeningModeProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="text-center py-8">
-        <Button size="lg" onClick={speak} className="active:scale-95 transition-transform">
-          <Volume2 className="mr-2" /> Nghe từ
+    <div className="space-y-5">
+      <Card className="text-center py-3 sm:py-5 shadow-sm">
+        <Button 
+          size="default" 
+          onClick={speak} 
+          className="active:scale-95 transition-transform text-sm sm:text-base px-4 sm:px-5 h-10 sm:h-11"
+        >
+          <Volume2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Nghe từ
         </Button>
       </Card>
-      <div className="space-y-3">
+      
+      {/* Grid: mobile 3 cột, desktop 4 cột */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
         {options.map((opt) => (
           <button
             key={opt}
             disabled={selected !== null}
             onClick={() => handleSelect(opt)}
-            className={`w-full p-4 rounded-lg border-2 text-left transition-all active:scale-95 ${
+            className={`p-2 sm:p-3 rounded-lg border-2 text-center transition-all active:scale-95 text-sm sm:text-base ${
               selected === opt
                 ? opt === meaning
                   ? 'border-green-500 bg-green-50'

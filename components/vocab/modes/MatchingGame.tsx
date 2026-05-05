@@ -119,7 +119,7 @@ export function MatchingGame({ cards, onMatch, onComplete, onProgress }: Matchin
   const isCorrectHighlight = (id: string) => correctHighlight && (correctHighlight.first === id || correctHighlight.second === id);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {gameCards.map((card) => {
         const matched = isMatched(card.id);
         return (

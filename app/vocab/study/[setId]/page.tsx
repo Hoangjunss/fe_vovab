@@ -50,7 +50,7 @@ export default function StudyPage() {
     <MainLayout>
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold capitalize">{mode}</h1>
+          
           <Button variant="outline" onClick={() => router.push('/vocab')} className="clay-button-outline h-8 px-3">
             <RotateCcw className="mr-1 h-3 w-3" /> Quay lại
           </Button>
