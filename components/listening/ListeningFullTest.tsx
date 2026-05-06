@@ -19,16 +19,17 @@ export function ListeningFullTest() {
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+  const [totalScore, setTotalScore] = useState(0); // tổng điểm qua các câu (nếu cần)
 
   const current = testData.questions[currentIndex];
   const isLast = currentIndex === testData.questions.length - 1;
-
-  useEffect(() => {
-    setUserAnswers(Array(current.text.split(' ').length).fill(''));
-    setShowResult(false);
-  }, [currentIndex]);
-
   const words = current.text.split(' ');
+
+  // Khởi tạo userAnswers khi chuyển câu
+  useEffect(() => {
+    setUserAnswers(Array(words.length).fill(''));
+    setShowResult(false);
+  }, [currentIndex, words.length]);
 
   const handleWordChange = (idx: number, value: string) => {
     const newAnswers = [...userAnswers];
@@ -42,12 +43,16 @@ export function ListeningFullTest() {
       if (ans.trim().toLowerCase() === words[i].toLowerCase()) correctCount++;
     });
     setScore(correctCount);
+    setTotalScore(prev => prev + correctCount);
     setShowResult(true);
   };
 
   const handleNext = () => {
     if (isLast) {
-      alert(`Hoàn thành! Đúng ${score}/${words.length} từ`);
+      alert(`Hoàn thành! Tổng điểm: ${totalScore + score}/${testData.questions.reduce((sum, q) => sum + q.text.split(' ').length, 0)}`);
+      // Reset về câu đầu (tuỳ chọn)
+      setCurrentIndex(0);
+      setTotalScore(0);
     } else {
       setCurrentIndex(prev => prev + 1);
     }
@@ -62,17 +67,16 @@ export function ListeningFullTest() {
             <input
               key={idx}
               type="text"
-              value={userAnswers[idx]}
+              value={userAnswers[idx] ?? ''} // luôn là string, tránh undefined
               onChange={(e) => handleWordChange(idx, e.target.value)}
               disabled={showResult}
-              className={`w-24 border-b-2 p-1 text-center ${
+              className={`w-24 border-b-2 p-1 text-center transition-colors ${
                 showResult
                   ? userAnswers[idx]?.toLowerCase() === word.toLowerCase()
                     ? 'border-green-500 text-green-600'
                     : 'border-red-500 text-red-600'
-                  : 'border-gray-300 focus:border-primary'
+                  : 'border-gray-300 focus:border-primary focus:outline-none'
               }`}
-              placeholder="___"
             />
           ))}
         </div>
@@ -84,15 +88,20 @@ export function ListeningFullTest() {
               {words.map((word, idx) => (
                 <div key={idx} className="flex items-center gap-1">
                   {userAnswers[idx]?.toLowerCase() === word.toLowerCase() ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-red-600" />
+                    <XCircle className="h-4 w-4 text-red-600 shrink-0" />
                   )}
-                  <span>{word}</span>
+                  <span className="break-words">{word}</span>
                 </div>
               ))}
             </div>
-            <Button onClick={handleNext} className="w-full">{isLast ? 'Hoàn thành' : 'Câu tiếp'}</Button>
+            <div className="text-center text-sm font-medium">
+              Đúng {score}/{words.length} từ
+            </div>
+            <Button onClick={handleNext} className="w-full">
+              {isLast ? 'Hoàn thành' : 'Câu tiếp theo'}
+            </Button>
           </div>
         )}
       </div>
