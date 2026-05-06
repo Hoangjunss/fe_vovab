@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { SpeechService } from '@/lib/speechService';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface VirtualAudioPlayerProps {
   text: string;
   autoPlay?: boolean;
+  duration?: number;
   onStart?: () => void;
   onEnd?: () => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
@@ -18,6 +19,7 @@ interface VirtualAudioPlayerProps {
 export function VirtualAudioPlayer({
   text,
   autoPlay = false,
+  duration: customDuration,
   onStart,
   onEnd,
   onTimeUpdate,
@@ -25,162 +27,182 @@ export function VirtualAudioPlayer({
 }: VirtualAudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(customDuration ?? 5);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [showVolumeMenu, setShowVolumeMenu] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-  const pauseOffsetRef = useRef<number>(0); // vị trí dừng (giây)
+  const pauseOffsetRef = useRef<number>(0);
   const isPausedRef = useRef<boolean>(false);
+  const waitingForStartRef = useRef<boolean>(false);
+  const speedMenuRef = useRef<HTMLDivElement>(null);
+  const volumeMenuRef = useRef<HTMLDivElement>(null);
+
+  const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
   const estimateDuration = (txt: string, rate: number): number => {
-    const charsPerSec = 3 * rate;
-    return Math.max(5, txt.length / charsPerSec);
+    if (customDuration !== undefined) return customDuration;
+    const charsPerSec = 12 * rate;
+    const estimated = txt.length / charsPerSec;
+    return Math.max(2, Math.min(estimated, 120));
   };
 
+  // Cập nhật duration & scale offset
   useEffect(() => {
-    const est = estimateDuration(text, playbackRate);
-    setDuration(est);
-    if (autoPlay) {
+    const newDuration = customDuration ?? estimateDuration(text, playbackRate);
+    if (newDuration === duration) return;
+    const ratio = duration > 0 ? pauseOffsetRef.current / duration : 0;
+    const newOffset = Math.min(Math.max(ratio * newDuration, 0), newDuration);
+    pauseOffsetRef.current = newOffset;
+    setCurrentTime(newOffset);
+    setDuration(newDuration);
+    if (isPlaying && !isPausedRef.current) {
+      SpeechService.stop();
+      if (timerRef.current) clearInterval(timerRef.current);
       startPlaying();
     }
+  }, [text, playbackRate, customDuration]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (speedMenuRef.current && !speedMenuRef.current.contains(event.target as Node)) {
+        setShowSpeedMenu(false);
+      }
+      if (volumeMenuRef.current && !volumeMenuRef.current.contains(event.target as Node)) {
+        setShowVolumeMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       SpeechService.stop();
     };
-  }, [text, playbackRate, autoPlay]);
+  }, []);
 
-  // Bắt đầu phát từ vị trí hiện tại (pauseOffsetRef.current)
+  const startTimer = (offsetSec: number) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    startTimeRef.current = Date.now() - offsetSec * 1000;
+    timerRef.current = setInterval(() => {
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      let newTime = offsetSec + elapsed;
+      if (newTime >= duration) {
+        newTime = duration;
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+        setIsPlaying(false);
+        setCurrentTime(duration);
+        onTimeUpdate?.(duration, duration);
+      } else {
+        setCurrentTime(newTime);
+        onTimeUpdate?.(newTime, duration);
+      }
+    }, 100);
+  };
+
   const startPlaying = () => {
     if (isPlaying && !isPausedRef.current) return;
     SpeechService.stop();
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const remainingTime = duration - pauseOffsetRef.current;
-    if (remainingTime <= 0.1) {
+    let offset = pauseOffsetRef.current;
+    if (offset >= duration - 0.1 || currentTime >= duration - 0.1) {
+      offset = 0;
       pauseOffsetRef.current = 0;
       setCurrentTime(0);
     }
+    if (offset >= duration) offset = duration - 0.1;
 
-    const percent = pauseOffsetRef.current / duration;
-    const charIndex = Math.min(Math.floor(text.length * percent), text.length - 1);
+    const percent = offset / duration;
+    let charIndex = Math.floor(text.length * percent);
+    charIndex = Math.min(charIndex, text.length - 1);
     const remainingText = text.slice(charIndex);
-    if (!remainingText.trim()) return;
+    if (!remainingText.trim()) {
+      setIsPlaying(false);
+      onEnd?.();
+      return;
+    }
 
-    startTimeRef.current = Date.now() - pauseOffsetRef.current * 1000;
-    const remaining = duration - pauseOffsetRef.current;
-    timerRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      if (elapsed >= remaining) {
-        clearInterval(timerRef.current);
+    waitingForStartRef.current = true;
+    setIsPlaying(true);
+    isPausedRef.current = false;
+
+    SpeechService.speak(
+      remainingText,
+      'en-US',
+      playbackRate,
+      () => {
+        if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = null;
         setIsPlaying(false);
         setCurrentTime(duration);
+        pauseOffsetRef.current = duration;
+        isPausedRef.current = false;
+        waitingForStartRef.current = false;
         onEnd?.();
         onTimeUpdate?.(duration, duration);
-      } else {
-        setCurrentTime(pauseOffsetRef.current + elapsed);
-        onTimeUpdate?.(pauseOffsetRef.current + elapsed, duration);
+      },
+      () => {
+        waitingForStartRef.current = false;
+        startTimer(offset);
+        onStart?.();
+      },
+      () => {
+        waitingForStartRef.current = false;
       }
-    }, 100);
-
-    SpeechService.speak(remainingText, 'en-US', playbackRate, () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      setIsPlaying(false);
-      setCurrentTime(duration);
-      onEnd?.();
-      onTimeUpdate?.(duration, duration);
-    });
-    setIsPlaying(true);
-    isPausedRef.current = false;
-    onStart?.();
+    );
   };
 
-  // Tạm dừng phát
   const pausePlaying = () => {
     if (!isPlaying) return;
-    SpeechService.pause(); // tạm dừng utterance
+    SpeechService.stop();
     if (timerRef.current) clearInterval(timerRef.current);
-    const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    pauseOffsetRef.current = Math.min(pauseOffsetRef.current + elapsed, duration);
-    setCurrentTime(pauseOffsetRef.current);
+    const elapsed = startTimeRef.current ? (Date.now() - startTimeRef.current) / 1000 : 0;
+    const newOffset = Math.min(pauseOffsetRef.current + elapsed, duration);
+    pauseOffsetRef.current = newOffset;
+    setCurrentTime(newOffset);
     setIsPlaying(false);
     isPausedRef.current = true;
+    waitingForStartRef.current = false;
   };
 
-  // Tiếp tục phát từ vị trí đã tạm dừng
   const resumePlaying = () => {
     if (isPlaying) return;
-    if (pauseOffsetRef.current >= duration) {
+    if (pauseOffsetRef.current >= duration - 0.1) {
       pauseOffsetRef.current = 0;
       setCurrentTime(0);
-      startPlaying();
-      return;
     }
-    SpeechService.resume(); // tiếp tục utterance
-    startTimeRef.current = Date.now() - pauseOffsetRef.current * 1000;
-    const remaining = duration - pauseOffsetRef.current;
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      if (elapsed >= remaining) {
-        clearInterval(timerRef.current);
-        setIsPlaying(false);
-        setCurrentTime(duration);
-        onEnd?.();
-        onTimeUpdate?.(duration, duration);
-      } else {
-        setCurrentTime(pauseOffsetRef.current + elapsed);
-        onTimeUpdate?.(pauseOffsetRef.current + elapsed, duration);
-      }
-    }, 100);
-    setIsPlaying(true);
-    isPausedRef.current = false;
-  };
-
-  const stopPlaying = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    SpeechService.stop();
-    setIsPlaying(false);
-    isPausedRef.current = false;
-    pauseOffsetRef.current = 0;
-    setCurrentTime(0);
+    startPlaying();
   };
 
   const togglePlay = () => {
-    if (isPlaying) {
-      pausePlaying();
-    } else {
-      if (pauseOffsetRef.current === 0 && currentTime === 0) {
-        startPlaying();
-      } else if (isPausedRef.current) {
-        resumePlaying();
-      } else {
-        startPlaying();
+    if (isPlaying) pausePlaying();
+    else {
+      if (pauseOffsetRef.current >= duration - 0.1) {
+        pauseOffsetRef.current = 0;
+        setCurrentTime(0);
       }
+      startPlaying();
     }
   };
 
   const handleSeek = (value: number[]) => {
     const newTime = value[0];
-    if (!text) return;
+    if (newTime < 0 || newTime > duration) return;
     const wasPlaying = isPlaying;
-    if (wasPlaying) pausePlaying(); // tạm dừng
-    // Cắt lại text
-    const seekPercent = newTime / duration;
-    const charIndex = Math.floor(text.length * seekPercent);
-    const slicedText = text.slice(charIndex);
-    if (slicedText.trim()) {
-      // Dừng hẳn các utterance cũ
+    if (wasPlaying) {
       SpeechService.stop();
       if (timerRef.current) clearInterval(timerRef.current);
-      pauseOffsetRef.current = newTime;
-      setCurrentTime(newTime);
-      if (wasPlaying) {
-        startPlaying(); // phát lại từ vị trí mới
-      }
     }
+    pauseOffsetRef.current = newTime;
+    setCurrentTime(newTime);
+    if (wasPlaying) startPlaying();
   };
 
   const handleSpeedChange = (speed: number) => {
@@ -188,15 +210,30 @@ export function VirtualAudioPlayer({
     const wasPlaying = isPlaying;
     if (wasPlaying) pausePlaying();
     setPlaybackRate(speed);
-    // Tính lại duration dựa trên text đầy đủ
-    const newDuration = estimateDuration(text, speed);
+    const newDuration = customDuration ?? estimateDuration(text, speed);
     setDuration(newDuration);
     const ratio = pauseOffsetRef.current / duration;
     const newOffset = ratio * newDuration;
-    pauseOffsetRef.current = newOffset;
-    setCurrentTime(newOffset);
-    if (wasPlaying) {
-      startPlaying();
+    pauseOffsetRef.current = Math.min(newOffset, newDuration);
+    setCurrentTime(pauseOffsetRef.current);
+    if (wasPlaying) startPlaying();
+    setShowSpeedMenu(false);
+  };
+
+  const handleVolumeChange = (val: number[]) => {
+    const newVol = val[0];
+    setVolume(newVol);
+    if (newVol === 0) setIsMuted(true);
+    else {
+      setIsMuted(false);
+    }
+  };
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+    } else {
+      setIsMuted(true);
     }
   };
 
@@ -207,53 +244,93 @@ export function VirtualAudioPlayer({
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  return (
-    <div className={cn('bg-muted/50 rounded-xl p-4 shadow-sm', className)}>
-      <div className="space-y-2">
+  const actualVolume = isMuted ? 0 : volume;
+
+return (
+  <div className={cn('w-full bg-white dark:bg-gray-800 rounded-lg shadow p-3', className)}>
+    {/* Hàng 1: Play, Slider, Volume+Speed */}
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Nút Play/Pause */}
+      <button
+        onClick={togglePlay}
+        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition shrink-0"
+      >
+        {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+      </button>
+
+      {/* Thanh trượt - co giãn */}
+      <div className="flex-1 min-w-[120px]">
         <Slider
           value={[currentTime]}
           max={duration}
-          step={0.5}
+          step={0.1}
           onValueChange={handleSeek}
           className="cursor-pointer"
         />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex items-center gap-2">
-          <button onClick={togglePlay} className="p-1.5 rounded-full hover:bg-muted transition">
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+      {/* Nhóm Volume + Speed (căn phải, xuống dòng khi mobile) */}
+      <div className="flex items-center gap-2 ml-auto">
+        {/* Dropdown âm lượng */}
+        <div className="relative" ref={volumeMenuRef}>
+          <button
+            onClick={() => setShowVolumeMenu(!showVolumeMenu)}
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+          >
+            {actualVolume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
           </button>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setIsMuted(!isMuted)} className="p-1.5 rounded-full hover:bg-muted">
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-            <Slider
-              value={[isMuted ? 0 : volume]}
-              max={1}
-              step={0.01}
-              onValueChange={(val) => setVolume(val[0])}
-              className="w-24 cursor-pointer"
-            />
-          </div>
+          {showVolumeMenu && (
+            <div className="absolute top-full mt-1 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-md shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-10 w-32">
+              <Slider
+                value={[actualVolume]}
+                max={1}
+                step={0.01}
+                onValueChange={handleVolumeChange}
+                className="cursor-pointer"
+              />
+              <button
+                onClick={toggleMute}
+                className="mt-2 text-xs text-gray-600 hover:text-gray-800 dark:text-gray-300 w-full text-center"
+              >
+                {isMuted ? 'Bật tiếng' : 'Tắt tiếng'}
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 text-sm">
-          {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
-            <button
-              key={speed}
-              onClick={() => handleSpeedChange(speed)}
-              className={`px-2 py-0.5 rounded ${playbackRate === speed ? 'bg-primary text-white' : 'bg-muted'}`}
-            >
-              {speed}x
-            </button>
-          ))}
+        {/* Dropdown tốc độ */}
+        <div className="relative" ref={speedMenuRef}>
+          <button
+            onClick={() => setShowSpeedMenu(!showSpeedMenu)}
+            className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-sm"
+          >
+            {playbackRate}x
+            <ChevronDown className="h-3 w-3" />
+          </button>
+          {showSpeedMenu && (
+            <div className="absolute top-full mt-1 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-md shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-10 min-w-[80px]">
+              {speedOptions.map((speed) => (
+                <button
+                  key={speed}
+                  onClick={() => handleSpeedChange(speed)}
+                  className={`block w-full text-left px-3 py-1 text-sm rounded hover:bg-gray-100/50 dark:hover:bg-gray-700/50 ${
+                    playbackRate === speed ? 'bg-blue-100/50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : ''
+                  }`}
+                >
+                  {speed}x
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
-  );
+
+    {/* Hàng 2: Thời gian */}
+    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+      <span>{formatTime(currentTime)}</span>
+      <span>{formatTime(duration)}</span>
+    </div>
+  </div>
+);
 }
